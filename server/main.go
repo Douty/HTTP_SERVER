@@ -1,30 +1,47 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net"
+	"os"
 )
+
+func readHTMLFile(filepath string) string {
+	var HTML string
+	file, err := os.Open(filepath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		HTML += line
+	}
+	return HTML
+}
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	buffer := make([]byte, 1024)
-	bytesLength, err := conn.Read(buffer)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
+	request := make([]byte, 1024)
+	conn.Read(request)
+	fmt.Println(string(request))
+	htmlFile := readHTMLFile("index.html")
+	conn.Write([]byte(htmlFile))
 
-	fmt.Println(buffer[:bytesLength])
 }
 
 func main() {
-	socket, err := net.Listen("tcp", ":8000")
+	socket, err := net.Listen("tcp", ":80")
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Listening on port 8000")
+	fmt.Println("Listening on port 80")
 	for {
 		connections, err := socket.Accept()
 		if err != nil {
