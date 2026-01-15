@@ -39,19 +39,26 @@ func generateHttpGetResponse() string {
 
 	return httpResponse
 }
+func handleHttpPostResponse() string {
+	httpResponse := "HTTP/1.1 201 Created\r\n"
+	httpResponse += "date: " + time.Now().Format(time.RFC1123) + "\r\n"
+	httpResponse += "Server: " + "Custom HTTP server\r\n"
+	httpResponse += "content-type: " + "text/html\r\n"
+
+	return httpResponse
+}
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 	var response string
-	request := make([]byte, 1024)
-	_, err := conn.Read(request)
+	request := bufio.NewReader(conn)
+
+	_, err := request.ReadString('\n')
 	if err == nil {
 		response = generateHttpGetResponse()
 	}
 	conn.Write([]byte(response))
-
-	fmt.Println(string(request))
-	fmt.Println(response)
+	fmt.Print(response)
 
 }
 
