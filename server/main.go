@@ -6,6 +6,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
+	"time"
 )
 
 func readHTMLFile(filepath string) string {
@@ -25,14 +27,31 @@ func readHTMLFile(filepath string) string {
 	return HTML
 }
 
+func generateHttpGetResponse() string {
+	htmlFile := readHTMLFile("index.html")
+	httpResponse := "HTTP/1.1 200 OK\r\n"
+	httpResponse += "date: " + time.Now().Format(time.RFC1123) + "\r\n"
+	httpResponse += "Server: " + "Custom HTTP server\r\n"
+	httpResponse += "content-type: " + "text/html\r\n"
+	httpResponse += "content-length: " + strconv.Itoa(len(htmlFile)) + "\r\n"
+	httpResponse += "\r\n"
+	httpResponse += htmlFile
+
+	return httpResponse
+}
+
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
-
+	var response string
 	request := make([]byte, 1024)
-	conn.Read(request)
+	_, err := conn.Read(request)
+	if err == nil {
+		response = generateHttpGetResponse()
+	}
+	conn.Write([]byte(response))
+
 	fmt.Println(string(request))
-	htmlFile := readHTMLFile("index.html")
-	conn.Write([]byte(htmlFile))
+	fmt.Println(response)
 
 }
 
