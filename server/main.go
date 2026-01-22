@@ -53,12 +53,15 @@ func handleConnection(conn net.Conn) {
 	var response string
 	request := bufio.NewReader(conn)
 
-	_, err := request.ReadString('\n')
-	if err == nil {
-		response = generateHttpGetResponse()
+	for i := 0; i < request.Size(); i++ {
+		a, _ := request.ReadString('\n')
+
+		fmt.Println(a)
 	}
+
+	generateHttpGetResponse()
+
 	conn.Write([]byte(response))
-	fmt.Print(response)
 
 }
 
