@@ -50,11 +50,13 @@ func readHTMLFile(filepath string) string {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	response, err := handler.ParseRequest(conn)
+	request, err := handler.ParseRequest(conn)
 	if err != nil {
-		fmt.Print("Error Occured: %w", err)
+		fmt.Println("Error")
 	}
-	fmt.Printf("%v", response)
+
+	fmt.Println(request)
+
 }
 
 func main() {

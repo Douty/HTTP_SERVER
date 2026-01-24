@@ -40,7 +40,7 @@ func ParseRequest(conn net.Conn) (Request, error) {
 	//collects the the method, route and version sent
 	requestLine, err := broswerRequest.ReadString('\n')
 	if err != nil {
-		return request, fmt.Errorf("Failed to properly read %w", err)
+		return request, fmt.Errorf("Failed to properly read request line: %w", err)
 	}
 
 	parts := strings.Split(requestLine, " ")
@@ -50,7 +50,7 @@ func ParseRequest(conn net.Conn) (Request, error) {
 	request.Method = Method(parts[0])
 	request.version = parts[2]
 
-	// collecting the route and queries
+	// collecting the route and queries (for get requests)
 
 	fullroute := parts[1]
 
@@ -74,6 +74,27 @@ func ParseRequest(conn net.Conn) (Request, error) {
 			}
 
 		}
+	}
+
+	//Collecting Header information
+	for {
+		headerLine, err := broswerRequest.ReadString('\n')
+		if err != nil {
+			return request, fmt.Errorf("Failed to properly read Headers%w", err)
+		}
+		headerLine = strings.TrimSpace(headerLine)
+		if headerLine == "" {
+			break
+
+		}
+		fields := strings.SplitN(headerLine, ":", 2)
+		if len(fields) == 2 {
+			key := fields[0]
+			value := fields[1]
+
+			request.headers[key] = value
+		}
+
 	}
 
 	return request, nil
