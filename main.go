@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"httpserver/handler"
+	"io"
 	"log"
 	"net"
 	"os"
+	"strings"
+	"time"
 )
 
 func readHTMLFile(filepath string) string {
@@ -49,10 +52,14 @@ func readHTMLFile(filepath string) string {
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
+	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 
 	request, err := handler.ParseRequest(conn)
 	if err != nil {
-		fmt.Println("Error")
+		if err != io.EOF && !strings.Contains(err.Error(), "connection closed") {
+			fmt.Println("Error:", err)
+		}
+		return
 	}
 
 	fmt.Println(request)

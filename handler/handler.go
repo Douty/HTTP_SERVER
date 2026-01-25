@@ -3,7 +3,9 @@ package handler
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -22,11 +24,13 @@ const (
 )
 
 type Request struct {
-	Method  Method
-	route   string
-	version string
-	headers map[string]string
-	query   map[string]string
+	Method   Method
+	route    string
+	version  string
+	headers  map[string]string
+	query    map[string]string
+	Body     string
+	formData map[string]string
 }
 
 func ParseRequest(conn net.Conn) (Request, error) {
@@ -40,7 +44,15 @@ func ParseRequest(conn net.Conn) (Request, error) {
 	//collects the the method, route and version sent
 	requestLine, err := broswerRequest.ReadString('\n')
 	if err != nil {
+		if err == io.EOF {
+			return request, fmt.Errorf("connection closed before request line: %w", err)
+		}
 		return request, fmt.Errorf("Failed to properly read request line: %w", err)
+	}
+	requestLine = strings.TrimSpace(requestLine)
+
+	if requestLine == "" {
+		return request, fmt.Errorf("Empty request line received")
 	}
 
 	parts := strings.Split(requestLine, " ")
@@ -80,13 +92,16 @@ func ParseRequest(conn net.Conn) (Request, error) {
 	for {
 		headerLine, err := broswerRequest.ReadString('\n')
 		if err != nil {
-			return request, fmt.Errorf("Failed to properly read Headers%w", err)
+			if err == io.EOF {
+				return request, fmt.Errorf("connection closed before request line: %w", err)
+			}
+			return request, fmt.Errorf("Failed to properly read Headers %w", err)
 		}
 		headerLine = strings.TrimSpace(headerLine)
 		if headerLine == "" {
 			break
-
 		}
+
 		fields := strings.SplitN(headerLine, ":", 2)
 		if len(fields) == 2 {
 			key := fields[0]
@@ -97,5 +112,22 @@ func ParseRequest(conn net.Conn) (Request, error) {
 
 	}
 
+	// Collecting body information
+	bodyLength := 0
+	if value, present := request.headers["Content-Length"]; present {
+		trimmedValue := strings.TrimSpace(value)
+		bodyLength, _ = strconv.Atoi(trimmedValue)
+	}
+
+	if bodyLength > 0 {
+		bodyBytes := make([]byte, bodyLength)
+		_, err := io.ReadFull(broswerRequest, bodyBytes)
+		if err != nil {
+			return request, fmt.Errorf("Failed to read request body: %w", err)
+		}
+
+		request.Body = string(bodyBytes)
+
+	}
 	return request, nil
 }
