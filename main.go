@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"httpserver/handler"
+	"httpserver/request"
 	"io"
 	"log"
 	"net"
@@ -54,7 +54,7 @@ func handleConnection(conn net.Conn) {
 	defer conn.Close()
 	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 
-	request, err := handler.ParseRequest(conn)
+	request, err := request.ParseRequest(conn)
 	if err != nil {
 		if err != io.EOF && !strings.Contains(err.Error(), "connection closed") {
 			fmt.Println("Error:", err)

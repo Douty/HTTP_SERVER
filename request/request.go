@@ -1,4 +1,4 @@
-package handler
+package request
 
 import (
 	"bufio"
@@ -24,13 +24,12 @@ const (
 )
 
 type Request struct {
-	Method   Method
-	route    string
-	version  string
-	headers  map[string]string
-	query    map[string]string
-	Body     string
-	formData map[string]string
+	Method  Method
+	route   string
+	version string
+	headers map[string]string
+	query   map[string]string
+	Body    string
 }
 
 func ParseRequest(conn net.Conn) (Request, error) {
