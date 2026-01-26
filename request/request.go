@@ -25,18 +25,18 @@ const (
 
 type Request struct {
 	Method  Method
-	route   string
-	version string
-	headers map[string]string
-	query   map[string]string
+	Route   string
+	Version string
+	Headers map[string]string
+	Query   map[string]string
 	Body    string
 }
 
 func ParseRequest(conn net.Conn) (Request, error) {
 	var request Request
 
-	request.headers = make(map[string]string)
-	request.query = make(map[string]string)
+	request.Headers = make(map[string]string)
+	request.Query = make(map[string]string)
 
 	broswerRequest := bufio.NewReader(conn)
 
@@ -59,14 +59,14 @@ func ParseRequest(conn net.Conn) (Request, error) {
 		return request, fmt.Errorf("Invalid request recieved")
 	}
 	request.Method = Method(parts[0])
-	request.version = parts[2]
+	request.Version = parts[2]
 
 	// collecting the route and queries (for get requests)
 
 	fullroute := parts[1]
 
 	routepart := strings.SplitN(fullroute, "?", 2)
-	request.route = routepart[0]
+	request.Route = routepart[0]
 
 	if len(routepart) == 2 {
 		if request.Method == GET {
@@ -77,9 +77,9 @@ func ParseRequest(conn net.Conn) (Request, error) {
 				if len(pair) == 2 {
 					key := pair[0]
 					value := pair[1]
-					request.query[key] = value
+					request.Query[key] = value
 				} else if len(pair) == 1 {
-					request.query[pair[0]] = ""
+					request.Query[pair[0]] = ""
 				}
 
 			}
@@ -106,14 +106,14 @@ func ParseRequest(conn net.Conn) (Request, error) {
 			key := fields[0]
 			value := fields[1]
 
-			request.headers[key] = value
+			request.Headers[key] = value
 		}
 
 	}
 
 	// Collecting body information
 	bodyLength := 0
-	if value, present := request.headers["Content-Length"]; present {
+	if value, present := request.Headers["Content-Length"]; present {
 		trimmedValue := strings.TrimSpace(value)
 		bodyLength, _ = strconv.Atoi(trimmedValue)
 	}
