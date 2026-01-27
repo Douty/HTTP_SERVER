@@ -3,12 +3,13 @@ package response
 import (
 	"bufio"
 	"httpserver/request"
-	"log"
+	"httpserver/status"
 	"net"
 	"os"
+	"strconv"
 )
 
-func readHTMLFile(filepath string) (syntax,error){
+func readHTMLFile(filepath string) (string, error) {
 	var HTML string
 	file, err := os.Open(filepath)
 	if err != nil {
@@ -18,24 +19,38 @@ func readHTMLFile(filepath string) (syntax,error){
 
 	scanner := bufio.NewScanner(file)
 
-	if err := scanner.Err(); err != nil{
-		return "", err
-	}
 	for scanner.Scan() {
 		line := scanner.Text()
 		HTML += line
 	}
-	return HTML
-}
 
-func GenerateResponse(conn net.Conn, request request.Request) error {
-	http_route := request.Route
-
-	switch http_route {
-	case "/":
-		pagedata := readHTMLFile("./pages/index.html")
-		conn.Write([[]byte(pagedata)], error) 
-		
+	if err := scanner.Err(); err != nil {
+		return "", err
 	}
 
+	return HTML, nil
+}
+
+func GenerateResponse(conn net.Conn, req request.Request) ([]byte, error) {
+	httpRoute := req.Route
+	var response string
+
+	switch httpRoute {
+	case "/":
+		if req.Method != request.GET {
+			bodyMessage := "Method Not Allowed"
+			response += "HTTP/1.1 " + strconv.Itoa(int(status.NOT_ALLOWED)) + " Method Not Allowed\r\n"
+			response += "Allow: " + string(request.GET) + "\r\n"
+			response += "Content-Length: " + strconv.Itoa(len(bodyMessage)) + "\r\n"
+			response += "\r\n"
+			response += bodyMessage
+
+			return []byte(response), nil
+		}
+
+	default:
+
+	}
+
+	return []byte("LOOL"), nil
 }

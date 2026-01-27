@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"httpserver/request"
+	"httpserver/response"
+	"httpserver/router"
 	"io"
 	"log"
 	"net"
@@ -35,7 +37,11 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
-	fmt.Println(request)
+	res, err := response.GenerateResponse(conn, request)
+	if err != nil {
+		fmt.Print("Error has occured in main", err)
+	}
+	conn.Write(res)
 
 }
 
@@ -45,6 +51,12 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Println("Listening on port 80")
+
+	if err := router.GenerateContentMap(); err != nil {
+		log.Fatal("Failed to load pages:", err)
+	}
+	fmt.Println("All content loaded!")
+
 	for {
 		connections, err := socket.Accept()
 		if err != nil {
