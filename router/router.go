@@ -31,16 +31,25 @@ func Router(req request.Request) ([]byte, error) {
 func handleAPI() {
 
 }
+
+var pagesDir = "./pages"
+
+// On startup, generate a hashmap with the
 func GenerateContentMap() error {
+
+	return GenerateContentMapFromPath(pagesDir)
+}
+
+func GenerateContentMapFromPath(folderpath string) error {
 	pages = make(map[string][]byte)
-	err := filepath.WalkDir("./pages", func(path string, d os.DirEntry, err error) error {
+	err := filepath.WalkDir(folderpath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if !d.IsDir() && strings.HasSuffix(d.Name(), ".html") {
 
-			cleanPath, err := filepath.Rel("./pages", path)
+			cleanPath, err := filepath.Rel(folderpath, path)
 			if err != nil {
 				return err
 			}
@@ -54,7 +63,8 @@ func GenerateContentMap() error {
 				return err
 			}
 			urlPath := "/" + cleanPath
-			urlPath = strings.TrimSuffix(urlPath, "/index.html")
+			urlPath = strings.TrimSuffix(urlPath, "\\"+d.Name())
+
 			urlPath = strings.TrimSuffix(urlPath, ".html")
 
 			if urlPath == "/home" {
