@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+	"httpserver/request"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,10 +10,27 @@ import (
 
 var pages map[string][]byte
 
-// func Router(req request.Request) (status.Status, []byte) {
+func Router(req request.Request) ([]byte, error) {
+	urlRequested := req.Route
 
-// }
+	if strings.HasPrefix(urlRequested, "/api/") {
+		handleAPI()
+	}
 
+	if content, exists := pages[urlRequested]; exists {
+		return content, nil
+	}
+
+	if notFound, exists := pages["/not_found"]; exists {
+		return notFound, fmt.Errorf("page not found: %s", urlRequested)
+	}
+
+	return nil, fmt.Errorf("page not found: %s", urlRequested)
+}
+
+func handleAPI() {
+
+}
 func GenerateContentMap() error {
 	pages = make(map[string][]byte)
 	err := filepath.WalkDir("./pages", func(path string, d os.DirEntry, err error) error {
