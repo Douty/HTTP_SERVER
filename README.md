@@ -1,6 +1,9 @@
 # Go-Raw-HTTP
 A custom web server made purely with GO only using raw TCP packets
 
+
+![Go Badge](https://img.shields.io/badge/go-1.21%2B-30d8be?style=for-the-badge&logo=go&logoSize=auto)
+
 #### My inspiration for this project 
 
 I wanted to gain a deeper understanding of how web servers like nginx and apache 
