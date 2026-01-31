@@ -37,7 +37,7 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
-	res, err := response.GenerateResponse(conn, request)
+	res, err := response.GenerateResponse(request)
 	if err != nil {
 		fmt.Print("Error has occured in main", err)
 	}

@@ -1,5 +1,7 @@
 package status
 
+import "strconv"
+
 type Status int
 
 const (
@@ -30,9 +32,19 @@ const (
 	UNAUTHORIZED     Status = 401
 	PAYMENT_REQUIRED Status = 402
 	FORBIDDEN        Status = 403
-	NON_FOUND        Status = 404
+	NOT_FOUND        Status = 404
 	NOT_ALLOWED      Status = 405
+
+	//Server error
+	INTERNAL_SERVER_ERROR Status = 500
+	NOT_IMPLEMENTED       Status = 501
+	BAD_GATEWAY           Status = 502
+	SERVICE_UNAVAILABLE   Status = 503
 
 	//???
 	IM_A_TEAPOT Status = 418
 )
+
+func ToString(status Status) string {
+	return strconv.Itoa(int(status))
+}

@@ -3,18 +3,31 @@ package router
 import (
 	"fmt"
 	"httpserver/request"
+	"httpserver/status"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
+type HTTPError struct {
+	StatusCode status.Status
+	Message    string
+}
+
+func (err *HTTPError) Error() string {
+	return fmt.Sprintf("%s, Error code: %d", err.Message, err.StatusCode)
+}
+
 var pages map[string][]byte
 
-func Router(req request.Request) ([]byte, error) {
+func Router(req request.Request) ([]byte, *HTTPError) {
 	urlRequested := req.Route
+	if req.Method != request.GET && !strings.HasPrefix(req.Route, "/api") {
+		return []byte("<h1>Method Not Allowed<h1>"), &HTTPError{Message: "Method Not Allowed", StatusCode: status.NOT_ALLOWED}
+	}
 
 	if strings.HasPrefix(urlRequested, "/api/") {
-		handleAPI()
+
 	}
 
 	if content, exists := pages[urlRequested]; exists {
@@ -22,13 +35,13 @@ func Router(req request.Request) ([]byte, error) {
 	}
 
 	if notFound, exists := pages["/not_found"]; exists {
-		return notFound, fmt.Errorf("page not found: %s", urlRequested)
+		return notFound, &HTTPError{Message: "Not Found", StatusCode: status.NOT_FOUND}
 	}
 
-	return nil, fmt.Errorf("page not found: %s", urlRequested)
+	return nil, &HTTPError{Message: "Internal server Error", StatusCode: status.INTERNAL_SERVER_ERROR}
 }
 
-func handleAPI() {
+func handleAPI(route string) {
 
 }
 
