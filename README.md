@@ -21,7 +21,7 @@ x = completed, / = in progress, [] = not started
 []  Containerize the server via Docker
 []  Implement LRU Cache 
 
-#### Useage & Setup
+#### Usage & Setup
 
 1. Clone the repo
 ```git clone https://github.com/Douty/HTTP_SERVER```
@@ -31,5 +31,39 @@ x = completed, / = in progress, [] = not started
 "http://localhost/"
 
 
+## System Architecture & Request Lifecycle
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Browser as Client (Browser)
+    participant Main as Main (TCP Listener)
+    participant Parser as Request Parser
+    participant Resp as Response Builder
+    participant Router as Router
+    participant Pagemap as In-Memory Page Hashmap 
 
+    Note over Browser, Main: 1. Connection & Data Receipt
+    Browser->>Main: TCP Connection (Raw Bytes)
+    Main->>Parser: Send Buffer 
+    
+    Note over Parser: 2. Protocol Parsing
+    Parser-->>Main: Return Request Struct
+    
+    Note over Main, Resp: 3. Orchestration Phase
+    Main->>Resp: HandleRequest(Request)
+    
+    Note over Resp, Pagemap: 4. Routing & Content Retrieval
+    Resp->>Router: Check to see if Page/API Exists
+    Router->>Pagemap: Check for valid pages or API Logic
+    Note over Pagemap, Router: Status Package provides code
+    Pagemap-->>Router: Content & Status Code
+    
+    Note over Router, Resp: 5. Response Generation
+    Router->>Resp: Return Data
+    Note over Resp: Build Status Line & Headers
+    Resp-->>Main: Raw Response String
+    
+    Note over Main, Browser: 6. Transmission
+    Main->>Browser: conn.Write(response)
+    Main->>Browser: conn.Close()
 
