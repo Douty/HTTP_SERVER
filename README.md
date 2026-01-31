@@ -8,18 +8,18 @@ web server functioned at a low level and gain experience handling sockets
 
 #### Features To do list
 
-x = completed, / = in progress, [] = not started
 
-[x] Manual TCP Handshake Handling 
-[x] Custom HTTP Status Error Handling 
-[x] HTTP Request Parser
-[x] HTTP Response Generator  
-[/] Dynamic Route Mapping (API routing not implemented yet)
-[/] Add CSS and JS support
-[]  Add TLS
-[]  Implement Github Actions CI/CD 
-[]  Containerize the server via Docker
-[]  Implement LRU Cache 
+
+- [x] **Manual TCP Handshake Handling**: Established using the `net` package without `net/http`.
+- [x] **Custom HTTP Status Error Handling**
+- [x] **HTTP Request Parser**: Decodes raw byte buffers into structured Go objects.
+- [x] **HTTP Response Generator**: Manually constructs protocol-compliant response strings.
+- [ ] **Dynamic Route Mapping**: API routing logic is currently in development.
+- [ ] **Add CSS and JS support**: Expanding the `In-Memory Page Hashmap` to handle non-HTML assets.
+- [ ] **Add TLS**: Implementing secure communication via `crypto/tls`.
+- [ ] **Implement GitHub Actions CI/CD**: Automating testing and deployment workflows.
+- [ ] **Containerize the server via Docker**: Creating a lightweight environment for deployment.
+- [ ] **Implement LRU Cache**: Optimizing memory usage for high-traffic static assets.
 
 #### Usage & Setup
 
