@@ -70,3 +70,6 @@ sequenceDiagram
     Main->>Browser: conn.Write(response)
     Main->>Browser: conn.Close()
 
+```
+#### Technical Challenges
+
