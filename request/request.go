@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"net"
 	"strconv"
 	"strings"
 )
@@ -32,13 +31,13 @@ type Request struct {
 	Body    string
 }
 
-func ParseRequest(conn net.Conn) (Request, error) {
+func ParseRequest(r io.Reader) (Request, error) {
 	var request Request
 
 	request.Headers = make(map[string]string)
 	request.Query = make(map[string]string)
 
-	broswerRequest := bufio.NewReader(conn)
+	broswerRequest := bufio.NewReader(r)
 
 	//collects the the method, route and version sent
 	requestLine, err := broswerRequest.ReadString('\n')
@@ -103,8 +102,8 @@ func ParseRequest(conn net.Conn) (Request, error) {
 
 		fields := strings.SplitN(headerLine, ":", 2)
 		if len(fields) == 2 {
-			key := fields[0]
-			value := fields[1]
+			key := strings.TrimSpace(fields[0])
+			value := strings.TrimSpace(fields[1])
 
 			request.Headers[key] = value
 		}
