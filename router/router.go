@@ -14,20 +14,37 @@ type HTTPError struct {
 	Message    string
 }
 
+type Context struct {
+	Method request.Method
+	Route  string
+	Params map[string]string
+}
+
 func (err *HTTPError) Error() string {
 	return fmt.Sprintf("%s, Error code: %d", err.Message, err.StatusCode)
 }
 
 var pages map[string][]byte
+var apiRoute = map[string]func(Context) ([]byte, *HTTPError){
+	"/api/getusers": APIGetAllUsers,
+}
 
 func Router(req request.Request) ([]byte, *HTTPError) {
 	urlRequested := req.Route
+
 	if req.Method != request.GET && !strings.HasPrefix(req.Route, "/api") {
 		return []byte("<h1>Method Not Allowed<h1>"), &HTTPError{Message: "Method Not Allowed", StatusCode: status.NOT_ALLOWED}
 	}
 
 	if strings.HasPrefix(urlRequested, "/api/") {
+		ctx := Context{Method: req.Method, Route: urlRequested, Params: req.Query}
 
+		if fn, exists := apiRoute[urlRequested]; exists {
+
+			return fn(ctx)
+		}
+
+		return nil, &HTTPError{Message: "API Route Not Found", StatusCode: status.NOT_FOUND}
 	}
 
 	if content, exists := pages[urlRequested]; exists {
