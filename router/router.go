@@ -13,7 +13,10 @@ type HTTPError struct {
 	StatusCode status.Status
 	Message    string
 }
-
+type Asset struct {
+	Content     []byte
+	ContentType string
+}
 type Context struct {
 	Method request.Method
 	Route  string
@@ -24,16 +27,16 @@ func (err *HTTPError) Error() string {
 	return fmt.Sprintf("%s, Error code: %d", err.Message, err.StatusCode)
 }
 
-var pages map[string][]byte
-var apiRoute = map[string]func(Context) ([]byte, *HTTPError){
+var pages map[string]Asset
+var apiRoute = map[string]func(Context) (Asset, *HTTPError){
 	"/api/getusers": APIGetAllUsers,
 }
 
-func Router(req request.Request) ([]byte, *HTTPError) {
+func Router(req request.Request) (Asset, *HTTPError) {
 	urlRequested := req.Route
 
 	if req.Method != request.GET && !strings.HasPrefix(req.Route, "/api") {
-		return []byte("<h1>Method Not Allowed<h1>"), &HTTPError{Message: "Method Not Allowed", StatusCode: status.NOT_ALLOWED}
+		return Asset{}, &HTTPError{Message: "Method Not Allowed", StatusCode: status.NOT_ALLOWED}
 	}
 
 	if strings.HasPrefix(urlRequested, "/api/") {
@@ -44,7 +47,7 @@ func Router(req request.Request) ([]byte, *HTTPError) {
 			return fn(ctx)
 		}
 
-		return nil, &HTTPError{Message: "API Route Not Found", StatusCode: status.NOT_FOUND}
+		return Asset{}, &HTTPError{Message: "API Route Not Found", StatusCode: status.NOT_FOUND}
 	}
 
 	if content, exists := pages[urlRequested]; exists {
@@ -55,7 +58,7 @@ func Router(req request.Request) ([]byte, *HTTPError) {
 		return notFound, &HTTPError{Message: "Not Found", StatusCode: status.NOT_FOUND}
 	}
 
-	return nil, &HTTPError{Message: "Internal server Error", StatusCode: status.INTERNAL_SERVER_ERROR}
+	return Asset{}, &HTTPError{Message: "Internal server Error", StatusCode: status.INTERNAL_SERVER_ERROR}
 }
 
 func handleAPI(route string) {
@@ -71,7 +74,8 @@ func GenerateContentMap() error {
 }
 
 func GenerateContentMapFromPath(folderpath string) error {
-	pages = make(map[string][]byte)
+	pages = make(map[string]Asset)
+
 	err := filepath.WalkDir(folderpath, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -95,29 +99,30 @@ func GenerateContentMapFromPath(folderpath string) error {
 				return err
 			}
 
-			urlPath := "/" + cleanPath
-			urlPath = strings.TrimSuffix(urlPath, "\\"+d.Name())
+			fileData := Asset{
+				Content: file,
+			}
 
-			if strings.Contains(urlPath, ".html") {
+			urlPath := "/" + filepath.ToSlash(cleanPath)
+
+			if strings.HasSuffix(d.Name(), ".html") {
 				urlPath = strings.TrimSuffix(urlPath, ".html")
+				fileData.ContentType = "text/html"
 
 				if urlPath == "/home" {
 					urlPath = "/"
 				}
-
-			} else if strings.Contains(urlPath, ".css") {
-				urlPath = strings.TrimSuffix(urlPath, ".css")
-
-			} else if strings.Contains(urlPath, ".js") {
-				urlPath = strings.TrimSuffix(urlPath, ".js")
-
+			} else if strings.HasSuffix(d.Name(), ".css") {
+				fileData.ContentType = "text/css"
+			} else if strings.HasSuffix(d.Name(), ".js") {
+				fileData.ContentType = "text/javascript"
 			}
 
-			pages[urlPath] = file
+			pages[urlPath] = fileData
 		}
 
 		return nil
 	})
-	return err
 
+	return err
 }

@@ -7,19 +7,19 @@ import (
 	"slices"
 )
 
-func APIGetAllUsers(ctx Context) ([]byte, *HTTPError) {
+func APIGetAllUsers(ctx Context) (Asset, *HTTPError) {
 	allowedMethods := []request.Method{request.GET}
 
 	if !slices.Contains(allowedMethods, ctx.Method) {
-		return nil, &HTTPError{Message: "Method Not Allowed", StatusCode: status.NOT_ALLOWED}
+		return Asset{}, &HTTPError{Message: "Method Not Allowed", StatusCode: status.NOT_ALLOWED}
 	}
 	users := []string{"Alice", "Bob", "Charlie"}
 	data, err := json.Marshal(users)
 	if err != nil {
-		return nil, &HTTPError{
+		return Asset{}, &HTTPError{
 			Message:    "Internal Server Error",
 			StatusCode: status.INTERNAL_SERVER_ERROR,
 		}
 	}
-	return data, nil
+	return Asset{Content: data, ContentType: "application/json"}, nil
 }

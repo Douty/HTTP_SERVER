@@ -25,17 +25,18 @@ func TestRouter(t *testing.T) {
 	}
 
 	for route := range pages {
-		req := request.Request{Route: route}
+		req := request.Request{Route: route, Method: "GET"}
 
 		page, err := Router(req)
 		if err != nil {
+			t.Log(page)
 			t.Fatalf("Expected no error, error message: %v", err)
 		}
 
-		if page == nil {
+		if page.Content == nil {
 			t.Fatal("Expected page content, got nil")
 		}
-		content := string(page)
+		content := string(page.Content)
 		if len(content) == 0 {
 			t.Errorf("Page: %s content is 0", route)
 		}
@@ -54,7 +55,7 @@ func TestAPIGetAllUsers(t *testing.T) {
 		}
 
 		var got []string
-		err := json.Unmarshal(data, &got)
+		err := json.Unmarshal(data.Content, &got)
 		if err != nil {
 			t.Fatalf("Failed to unmarshal response: %v", err)
 		}
