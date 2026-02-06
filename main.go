@@ -13,19 +13,6 @@ import (
 	"time"
 )
 
-// func generateHttpGetResponse() string {
-// 	htmlFile := readHTMLFile("index.html")
-// 	httpResponse := "HTTP/1.1 200 OK\r\n"
-// 	httpResponse += "date: " + time.Now().Format(time.RFC1123) + "\r\n"
-// 	httpResponse += "Server: " + "Custom HTTP server\r\n"
-// 	httpResponse += "content-type: " + "text/html\r\n"
-// 	httpResponse += "content-length: " + strconv.Itoa(len(htmlFile)) + "\r\n"
-// 	httpResponse += "\r\n"
-// 	httpResponse += htmlFile
-
-// 	return httpResponse
-// }
-
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 	conn.SetReadDeadline(time.Now().Add(5 * time.Second))

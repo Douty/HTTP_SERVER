@@ -5,6 +5,7 @@ import (
 	"httpserver/router"
 	"httpserver/status"
 	"strconv"
+	"time"
 )
 
 func GenerateResponse(req request.Request) ([]byte, error) {
@@ -17,6 +18,8 @@ func GenerateResponse(req request.Request) ([]byte, error) {
 		httpResponse += "HTTP/1.1 " + status.ToString(status.OK) + " OK\r\n"
 	}
 
+	httpResponse += "date: " + time.Now().Format(time.RFC1123) + "\r\n"
+	httpResponse += "Server: " + "Custom HTTP server\r\n"
 	httpResponse += "Content-Type: text/html\r\n"
 	httpResponse += "Content-Length: " + strconv.Itoa(len(data)) + "\r\n"
 	httpResponse += "\r\n"

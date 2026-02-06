@@ -77,7 +77,9 @@ func GenerateContentMapFromPath(folderpath string) error {
 			return err
 		}
 
-		if !d.IsDir() && strings.HasSuffix(d.Name(), ".html") {
+		if !d.IsDir() && (strings.HasSuffix(d.Name(), ".html") ||
+			strings.HasSuffix(d.Name(), ".css") ||
+			strings.HasSuffix(d.Name(), ".js")) {
 
 			cleanPath, err := filepath.Rel(folderpath, path)
 			if err != nil {
@@ -92,16 +94,26 @@ func GenerateContentMapFromPath(folderpath string) error {
 			if err != nil {
 				return err
 			}
+
 			urlPath := "/" + cleanPath
 			urlPath = strings.TrimSuffix(urlPath, "\\"+d.Name())
 
-			urlPath = strings.TrimSuffix(urlPath, ".html")
+			if strings.Contains(urlPath, ".html") {
+				urlPath = strings.TrimSuffix(urlPath, ".html")
 
-			if urlPath == "/home" {
-				urlPath = "/"
+				if urlPath == "/home" {
+					urlPath = "/"
+				}
+
+			} else if strings.Contains(urlPath, ".css") {
+				urlPath = strings.TrimSuffix(urlPath, ".css")
+
+			} else if strings.Contains(urlPath, ".js") {
+				urlPath = strings.TrimSuffix(urlPath, ".js")
+
 			}
-			pages[urlPath] = file
 
+			pages[urlPath] = file
 		}
 
 		return nil
