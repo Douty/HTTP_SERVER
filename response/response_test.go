@@ -44,7 +44,7 @@ func TestVaildResponse(t *testing.T) {
 		t.Fatalf("Failed to load pages: %v", err)
 	}
 
-	req := request.Request{Route: "/"}
+	req := request.Request{Route: "/about", Method: request.GET}
 	response, err := GenerateResponse(req)
 
 	if err != nil {
@@ -57,6 +57,7 @@ func TestVaildResponse(t *testing.T) {
 	}
 
 	if statusLine != "HTTP/1.1 200 OK" {
+
 		t.Errorf("Expected status 'HTTP/1.1 200 OK', got '%s'", statusLine)
 	}
 
@@ -78,7 +79,7 @@ func TestInvaildResponse(t *testing.T) {
 		t.Fatalf("Failed to load pages: %v", err)
 	}
 
-	req := request.Request{Route: "/invaild"}
+	req := request.Request{Route: "/invaild", Method: "GET"}
 	response, err := GenerateResponse(req)
 
 	if err != nil {

@@ -49,12 +49,31 @@ func Router(req request.Request) (Asset, *HTTPError) {
 
 		return Asset{}, &HTTPError{Message: "API Route Not Found", StatusCode: status.NOT_FOUND}
 	}
+	//if browser requests /home
+	if urlRequested == "/home" || urlRequested == "/home/index" {
+		urlRequested = "/"
+	}
 
 	if content, exists := pages[urlRequested]; exists {
+		fmt.Printf("DEBUG: Found route '%s'\n", urlRequested)
 		return content, nil
 	}
 
-	if notFound, exists := pages["/not_found"]; exists {
+	if strings.HasSuffix(urlRequested, "/") && urlRequested != "/" {
+		trimmed := strings.TrimSuffix(urlRequested, "/")
+		if content, exists := pages[trimmed]; exists {
+			return content, nil
+		}
+	}
+
+	if !strings.HasSuffix(urlRequested, "/") {
+		withSlash := urlRequested + "/"
+		if content, exists := pages[withSlash]; exists {
+			return content, nil
+		}
+	}
+
+	if notFound, exists := pages["/not_found/404"]; exists {
 		return notFound, &HTTPError{Message: "Not Found", StatusCode: status.NOT_FOUND}
 	}
 
@@ -81,48 +100,64 @@ func GenerateContentMapFromPath(folderpath string) error {
 			return err
 		}
 
-		if !d.IsDir() && (strings.HasSuffix(d.Name(), ".html") ||
-			strings.HasSuffix(d.Name(), ".css") ||
-			strings.HasSuffix(d.Name(), ".js")) {
+		if d.IsDir() {
+			return nil
+		}
+		fileExt := filepath.Ext(d.Name())
 
-			cleanPath, err := filepath.Rel(folderpath, path)
-			if err != nil {
-				return err
-			}
+		if fileExt != ".html" && fileExt != ".css" && fileExt != ".js" {
+			return nil
+		}
 
-			if strings.Contains(cleanPath, "..") {
-				return nil
-			}
+		cleanPath, err := filepath.Rel(folderpath, path)
+		if err != nil {
+			return err
+		}
 
-			file, err := os.ReadFile(path)
-			if err != nil {
-				return err
-			}
+		if strings.Contains(cleanPath, "..") {
+			return nil
+		}
 
-			fileData := Asset{
-				Content: file,
-			}
+		file, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
 
-			urlPath := "/" + filepath.ToSlash(cleanPath)
+		fileData := Asset{Content: file}
 
-			if strings.HasSuffix(d.Name(), ".html") {
-				urlPath = strings.TrimSuffix(urlPath, ".html")
-				fileData.ContentType = "text/html"
+		urlPath := "/" + filepath.ToSlash(cleanPath)
 
-				if urlPath == "/home" {
-					urlPath = "/"
+		switch fileExt {
+		case ".html":
+			urlPath = strings.TrimSuffix(urlPath, ".html")
+			fileData.ContentType = "text/html"
+
+			fmt.Printf("DEBUG: Full urlPath %s\n", urlPath)
+			if filepath.Base(urlPath) == "index" {
+				dirPath := filepath.ToSlash(filepath.Dir(urlPath))
+				switch dirPath {
+				case "/home", "/", ".":
+					pages["/"] = fileData
+				default:
+					pages[dirPath] = fileData
 				}
-			} else if strings.HasSuffix(d.Name(), ".css") {
-				fileData.ContentType = "text/css"
-			} else if strings.HasSuffix(d.Name(), ".js") {
-				fileData.ContentType = "text/javascript"
+			} else {
+				pages[urlPath] = fileData
 			}
-
+		case ".css":
+			fileData.ContentType = "text/css"
+			pages[urlPath] = fileData
+		case ".js":
+			fileData.ContentType = "text/javascript"
 			pages[urlPath] = fileData
 		}
 
+		fmt.Printf("DEBUG: Registered route: '%s' (ContentType: %s)\n", urlPath, fileData.ContentType)
+
 		return nil
 	})
-
+	for key, _ := range pages {
+		fmt.Printf("DEBUG: page key  %s\n", key)
+	}
 	return err
 }

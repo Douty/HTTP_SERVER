@@ -25,7 +25,7 @@ func TestRouter(t *testing.T) {
 	}
 
 	for route := range pages {
-		req := request.Request{Route: route, Method: "GET"}
+		req := request.Request{Route: route, Method: request.GET}
 
 		page, err := Router(req)
 		if err != nil {
