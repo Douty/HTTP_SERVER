@@ -156,7 +156,7 @@ func GenerateContentMapFromPath(folderpath string) error {
 
 		return nil
 	})
-	for key, _ := range pages {
+	for key := range pages {
 		fmt.Printf("DEBUG: page key  %s\n", key)
 	}
 	return err
