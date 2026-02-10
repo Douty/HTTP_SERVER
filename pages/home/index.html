@@ -3,17 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Web Server Test</title>
+    <link rel="stylesheet" href="/home/style.css">
 </head>
 <body>
-    <h1>Testinggg!</h1>
-    <h2>This is being served from a custom http server</h2>
-    <form action="/" method="post">
-        <label for="fname">First name:</label>
-        <input type="text" id="fname" name="fname"><br><br>
-        <label for="lname">Last name:</label>
-        <input type="text" id="lname" name="lname"><br><br>
-        <input type="submit" value="Submit">
-    </form>
+    <div class="container">
+        <h1>Server Status: <span id="status">Online</span></h1>
+        <p>If you can see this styled box, your server is successfully serving <strong>HTML</strong> and <strong>CSS</strong>.</p>
+        
+        <div class="test-zone">
+            <button id="testBtn">Test JavaScript</button>
+            <p id="msg"></p>
+        </div>
+
+        <div class="server-info">
+            <h3>Test Checklist:</h3>
+            <ul>
+                <li>✅ TCP Handshake</li>
+                <li>✅ HTTP GET Request</li>
+                <li>✅ File System I/O</li>
+            </ul>
+        </div>
+    </div>
+    <script src="/home/script.js"></script>
 </body>
 </html>
