@@ -20,6 +20,10 @@ web server functioned at a low level and gain experience handling sockets
     311904 Requests in 30.03s
     Transfer/sec: 10.83MB
 
+Currently exploring reasonings why some requests have a high std dev/latency
+
+
+
 #### Features To do list
 
 
