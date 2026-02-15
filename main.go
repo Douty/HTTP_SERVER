@@ -15,22 +15,24 @@ import (
 
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
-	conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 
-	requestReader := bufio.NewReader(conn)
-	request, err := request.ParseRequest(requestReader)
-	if err != nil {
-		if err != io.EOF && !strings.Contains(err.Error(), "connection closed") {
-			fmt.Println("Error:", err)
+	for {
+		conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+		requestReader := bufio.NewReader(conn)
+		request, err := request.ParseRequest(requestReader)
+		if err != nil {
+			if err != io.EOF && !strings.Contains(err.Error(), "connection closed") {
+				fmt.Println("Error:", err)
+			}
+			return
 		}
-		return
-	}
 
-	res, err := response.GenerateResponse(request)
-	if err != nil {
-		fmt.Print("Error has occured generating a response", err)
+		res, err := response.GenerateResponse(request)
+		if err != nil {
+			fmt.Print("Error has occured generating a response", err)
+		}
+		conn.Write(res)
 	}
-	conn.Write(res)
 
 }
 
