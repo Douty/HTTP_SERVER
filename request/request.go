@@ -1,8 +1,8 @@
 package request
 
 import (
-	"bufio"
 	"fmt"
+	"httpserver/pool"
 	"io"
 	"strconv"
 	"strings"
@@ -37,7 +37,8 @@ func ParseRequest(r io.Reader) (Request, error) {
 	request.Headers = make(map[string]string)
 	request.Query = make(map[string]string)
 
-	broswerRequest := bufio.NewReader(r)
+	broswerRequest := pool.GetReader(r)
+	defer pool.PutReader(broswerRequest)
 
 	//collects the the method, route and version sent
 	requestLine, err := broswerRequest.ReadString('\n')
@@ -118,13 +119,21 @@ func ParseRequest(r io.Reader) (Request, error) {
 	}
 
 	if bodyLength > 0 {
-		bodyBytes := make([]byte, bodyLength)
-		_, err := io.ReadFull(broswerRequest, bodyBytes)
+
+		bodyBuffer := pool.ReadBufferPool.Get().([]byte)
+		defer pool.ReadBufferPool.Put(bodyBuffer)
+
+		if bodyLength > len(bodyBuffer) {
+			bodyBuffer = make([]byte, bodyLength)
+			defer func() {}()
+		}
+
+		_, err := io.ReadFull(broswerRequest, bodyBuffer[:bodyLength])
 		if err != nil {
 			return request, fmt.Errorf("Failed to read request body: %w", err)
 		}
 
-		request.Body = string(bodyBytes)
+		request.Body = string(bodyBuffer[:bodyLength])
 
 	}
 	return request, nil

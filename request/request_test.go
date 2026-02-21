@@ -34,7 +34,7 @@ func CompareRequests(res Request, expectedRes Request, isVaild bool, t *testing.
 	}
 
 	if len(res.Query) != len(expectedRes.Query) {
-		t.Errorf("Query count mismatch: expected %q, got %q", len(expectedRes.Query), len(res.Query))
+		t.Errorf("Query count mismatch: expected %d, got %d", len(expectedRes.Query), len(res.Query))
 	}
 
 	for key, value := range expectedRes.Query {
