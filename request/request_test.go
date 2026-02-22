@@ -1,6 +1,7 @@
 package request
 
 import (
+	"bufio"
 	"io"
 	"strings"
 	"testing"
@@ -51,6 +52,8 @@ func CompareRequests(res Request, expectedRes Request, isVaild bool, t *testing.
 func TestParsingVaildGetRequest(t *testing.T) {
 	testRequest := "GET /api/v1/users?id=123 HTTP/1.1\r\nHost: example.com\r\n User-Agent: Mozilla/5.0\r\n Accept: application/json\r\n"
 	stringReader := strings.NewReader(testRequest)
+	bufioReader := bufio.NewReader(stringReader)
+
 	expectedRes := Request{
 		Method:  "GET",
 		Route:   "/api/v1/users",
@@ -66,7 +69,7 @@ func TestParsingVaildGetRequest(t *testing.T) {
 		Body: "",
 	}
 
-	res, err := ParseRequest(stringReader)
+	res, err := ParseRequest(bufioReader)
 	if err != io.EOF && !strings.Contains(err.Error(), "connection closed") {
 		t.Fatalf("Error: %s", err)
 	}
@@ -75,16 +78,19 @@ func TestParsingVaildGetRequest(t *testing.T) {
 
 }
 func TestParsingInVaildGetRequest(t *testing.T) {
+
 	badInput := "GET /api/v1/users\r\nHost: example.com\r\n\r\n"
 
-	_, err := ParseRequest(strings.NewReader(badInput))
+	stringReader := strings.NewReader(badInput)
+	bufioReader := bufio.NewReader(stringReader)
+
+	_, err := ParseRequest(bufioReader)
 
 	if err != nil {
 		t.Logf("Caught expected error: %v\n", err)
 	} else {
-		t.Errorf("Expected an error for invalid request line, but got none")
+		t.Errorf("Expected an error for invalid request line (missing HTTP version), but got none")
 	}
-
 }
 
 // API NOT IMPLEMENTED YET

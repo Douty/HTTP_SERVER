@@ -1,6 +1,7 @@
 package request
 
 import (
+	"bufio"
 	"fmt"
 	"httpserver/pool"
 	"io"
@@ -31,14 +32,11 @@ type Request struct {
 	Body    string
 }
 
-func ParseRequest(r io.Reader) (Request, error) {
+func ParseRequest(broswerRequest *bufio.Reader) (Request, error) {
 	var request Request
 
 	request.Headers = make(map[string]string)
 	request.Query = make(map[string]string)
-
-	broswerRequest := pool.GetReader(r)
-	defer pool.PutReader(broswerRequest)
 
 	//collects the the method, route and version sent
 	requestLine, err := broswerRequest.ReadString('\n')
@@ -125,7 +123,6 @@ func ParseRequest(r io.Reader) (Request, error) {
 
 		if bodyLength > len(bodyBuffer) {
 			bodyBuffer = make([]byte, bodyLength)
-			defer func() {}()
 		}
 
 		_, err := io.ReadFull(broswerRequest, bodyBuffer[:bodyLength])
