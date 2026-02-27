@@ -86,9 +86,60 @@ sequenceDiagram
     Main->>Browser: conn.Close()
 
 ```
-## Technical Challenges
+# Technical Challenges
 
-#### Handling Keep alive: Closing the tcp socket connection prematurely
+### Server Performance Optimization 
+
+<br>The problem</b>
+
+During testing the server had 303ms latency spikes affecting ~8% of requests under load. 
+
+<br>Root Cause</br>
+
+With each new request, the sever allocates new memory buffers which causes frequent garbage collection pauses feezes the server 
+
+<br>The solution</br>
+
+Instead of allocating new buffers for each request. I implemented object pooling to reuse the buffers created already. 
+```mermaid
+flowchart 
+    subgraph Before["Before Pooling"]
+        direction TB
+        A1[Request] --> B1[Allocate Buffer<br/>4KB new memory]
+        B1 --> C1[Use Buffer]
+        C1 --> D1[Buffer becomes garbage]
+        D1 --> E1[GC runs every 2s]
+        E1 --> F1[303ms pause]
+    end
+    
+    subgraph After["After Pooling"]
+        direction TB
+        A2[Request] --> B2[Get from Pool<br/>Reuse existing]
+        B2 --> C2[Use Buffer]
+        C2 --> D2[Return to Pool]
+        D2 --> E2[No garbage]
+        E2 --> F2[58ms outliers]
+    end
+    
+    style D1 fill:#ffcccc
+    style F1 fill:#ff6b6b,color:#fff
+    style E2 fill:#90EE90
+    style F2 fill:#4CAF50,color:#fff
+```
+<br>Results</br>
+| Metric | Before | After  | Improvement |
+|--------|--------|-------|-------------|
+| **Throughput** | 10,384 req/sec | 16,891 req/sec | **+63%** |
+| **Avg Latency** | 14.37 ms | 5.97 ms | **+58% faster** |
+| **Max Latency** | 303.01 ms | 58.90 ms | **+81% better** |
+
+## Key Learnings
+
+1. **GC pauses kill tail latency** - Even with good average performance (14ms), GC caused 21x worse outliers
+2. **Pooling is powerful** - Eliminating just 2 major allocations gave 60%+ performance boost
+3. **Warmup matters** - First test: 24ms avg. Fourth test: 5.97ms avg (pools need to fill up)
+
+### Handling Keep alive: Closing the tcp socket connection prematurely
 
 ##### TLDR: 
 
