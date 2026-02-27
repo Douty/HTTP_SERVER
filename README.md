@@ -11,14 +11,52 @@ web server functioned at a low level and gain experience handling sockets
 
 #### Current  Benchmarks
 
+Run #1  (Server warm up)
+| Thread Stats | Avg   | Stdev  | Max     | +/- Stdev |
+| ------------ | ----- | ------ | ------- | --------- |
+| Latency      | 24.00ms  | 54.50ms  | 456.94ms  | 91.71%    |
+| Req/Sec      | 3.53k  | 1.63k  | 5.08k   | 80.49%   |
+
+Requests/sec:  13276.73
+Transfer/sec:     13.85MB
+
+Run #2 
+| Thread Stats | Avg   | Stdev  | Max     | +/- Stdev |
+| ------------ | ----- | ------ | ------- | --------- |
+| Latency      | 6.97ms   | 5.14ms  | 89.43ms  | 94.82%    |
+| Req/Sec      | 3.84k  | 689.02  | 5.11k   | 72.67%   |
+
+Requests/sec:  15284.58
+Transfer/sec:     15.95MB
+
+Run #3
+| Thread Stats | Avg   | Stdev  | Max     | +/- Stdev |
+| ------------ | ----- | ------ | ------- | --------- |
+| Latency      | 8.52ms   | 12.28ms  | 247.07ms  | 95.31%    |
+| Req/Sec      | 3.78k  | 1.05k | 5.26k   | 77.75%   |
+
+Requests/sec:  15058.00
+Transfer/sec:     15.71MB
+
+Run #4
+| Thread Stats | Avg   | Stdev  | Max     | +/- Stdev |
+| ------------ | ----- | ------ | ------- | --------- |
+| Latency      | 5.97ms   | 2.56ms  | 58.90ms  | 80.79%    |
+| Req/Sec      | 4.24k  | 468.23 | 5.18k   | 68.75%   |
+
+Requests/sec:  16891.08
+Transfer/sec:     17.62MB
+
+#### Previous  Benchmarks
+
 4 Threads, 100 concurent connections 
 | Thread Stats | Avg   | Stdev  | Max     | +/- Stdev |
 | ------------ | ----- | ------ | ------- | --------- |
 | Latency      | 14.37ms   | 21.96ms  | 303.01ms  | 92.48%    |
 | Req/Sec      | 2.61k  | 1.06k  | 4.67k   | 61.71%   |
 
-    311904 Requests in 30.03s
-    Transfer/sec: 10.83MB
+311904 Requests in 30.03s
+Transfer/sec: 10.83MB
 
 Currently exploring reasonings why some requests have a high std dev/latency
 
