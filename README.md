@@ -58,7 +58,7 @@ Transfer/sec:     17.62MB
 311904 requests in 30.03s
 Transfer/sec: 10.83MB
 
-I'm still investigating why some requests have high latency variance (std dev).
+These benchmarks were run before profiling. See [Profiling: finding the real bottleneck](#profiling-finding-the-real-bottleneck) for what was actually limiting throughput.
 
 
 
@@ -136,7 +136,7 @@ Under load (wrk, 100 concurrent connections), average latency was 14.37ms but th
 
 **What I found**
 
-On every request, the connection loop created a brand-new 4KB `bufio.Reader` (and request bodies got a newly allocated buffer). With keep-alive, a single connection handles thousands of requests, so this added up to a lot of allocations and extra work for Go's garbage collector. My working theory is that this GC pressure caused most of the latency spikes. I haven't confirmed it with a profiler yet (see Next Steps).
+On every request, the connection loop created a brand-new 4KB `bufio.Reader` (and request bodies got a newly allocated buffer). With keep-alive, a single connection handles thousands of requests, so this added up to a lot of allocations and extra work for Go's garbage collector. My first guess was that GC pauses caused the latency spikes. Profiling later showed that guess was wrong (see below).
 
 Creating a new reader per request was also a correctness bug: a `bufio.Reader` can read ahead past the end of the current request, and those bytes were thrown away when the next request got a fresh reader.
 
@@ -171,20 +171,42 @@ flowchart
 | **Avg Latency** | 14.37 ms | 5.97 ms | **58% lower** |
 | **Max Latency** | 303.01 ms | 58.90 ms | **81% lower** |
 
-*The "after" numbers come from the best of four runs. The same change also raised the read deadline from 5s to 10s, so not all of the difference is due to buffer reuse alone.*
+*The "after" numbers come from the best of four runs. The same change also raised the read deadline from 5s to 10s, so not all of the difference is due to buffer reuse alone. These runs used a different setup from the profiling below, so the two sets of numbers can't be compared directly.*
+
+### Profiling: finding the real bottleneck
+
+To check my GC theory, I profiled three builds under the same load: 100 keep-alive connections, three 10-second runs each after a warm-up. I used `GODEBUG=gctrace=1` for GC pauses and `net/http/pprof` for CPU, allocation and block profiles.
+
+| | Before reader fix | After reader fix | After removing per-request debug print |
+|---|---|---|---|
+| Requests/sec | 64.3k | 75.2k (+17%) | 138.9k (+85%) |
+| Avg latency | 1.56 ms | 1.33 ms | 0.72 ms |
+| Memory allocated per request | ~8.2 KB | ~4.3 KB | ~4.3 KB |
+| GC runs per 1,000 requests | 7.2 | 5.0 | 2.4 |
+| Longest GC pause | 1.1 ms | 1.4 ms | < 8 ms |
+
+**What the profiles showed**
+
+- **GC was not the cause.** The longest stop-the-world GC pause was 1.4ms, far too short to explain 300ms spikes. The reader fix was still worthwhile: it halved memory allocated per request and cut GC runs by about 30%, for a 17% throughput gain.
+- **The real bottleneck was a debug log line.** The router printed `DEBUG: Found route ...` on every request. In the CPU profile, `fmt.Printf` used under 2% of CPU, but the block profile showed that **99.95% of all goroutine waiting time** was spent on the stdout file's write lock. Only one goroutine can write to stdout at a time, so 100 connections queued up behind a single log line.
+- **Removing that line nearly doubled throughput** (75.2k → 138.9k requests/sec) and halved average latency.
+- **Next hotspot:** `GenerateResponse` now accounts for about 85% of allocated memory, because building the response with string concatenation copies each page body several times.
+
+*Setup: Windows 11, no Docker, with the load generator on the same 32-core machine. Only the comparisons between columns are meaningful, not the absolute numbers. I couldn't reproduce the original 303ms spike here (the worst request was 20–30ms in every build), so it was likely caused by the Docker setup.*
 
 ## Key Learnings
 
-1. **Per-request allocations add up** - Under keep-alive, anything allocated per request is allocated thousands of times per connection.
-2. **Reuse buffers at the right scope** - The biggest win came from tying the reader's lifetime to the connection instead of to each request.
-3. **Warm-up matters** - First run: 24ms average latency. Fourth run: 5.97ms average.
-4. **Measure, don't guess** - Benchmarks showed the problem; a profiler is the right tool to prove the cause.
+1. **Measure, don't guess** - My GC theory sounded right but was wrong. A block profile found the real problem in minutes.
+2. **CPU profiles miss waiting** - The logging cost almost no CPU. It hurt because goroutines were blocked waiting for a lock, which only the block profile shows.
+3. **Keep the hot path quiet** - Anything that runs once per request, like a log line, runs hundreds of thousands of times under load.
+4. **Reuse buffers at the right scope** - Tying the reader's lifetime to the connection instead of each request halved per-request allocations.
+5. **Warm-up matters** - First run: 24ms average latency. Fourth run: 5.97ms average.
 
 ## Next Steps
 
-- Confirm the cause of the remaining latency spikes with `pprof` and `GODEBUG=gctrace=1`.
-- Remove the per-request debug logging from the hot path.
+- Build responses with a single pre-sized buffer instead of string concatenation.
 - Add limits on header size and request body size.
+- Add a leveled logger (or a buffered, asynchronous one) so debug output can be turned off in production.
 
 ### Handling Keep-Alive: Closing the TCP connection too early
 

@@ -55,7 +55,6 @@ func Router(req request.Request) (Asset, *HTTPError) {
 	}
 
 	if content, exists := pages[urlRequested]; exists {
-		fmt.Printf("DEBUG: Found route '%s'\n", urlRequested)
 		return content, nil
 	}
 
